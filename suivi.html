@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suivi de commande – Justine Food</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--red:#d90429;--ink:#0b090a;--mut:#6c757d;--bg:#f8f9fa;--line:#e9ecef;--ok:#1eaa53}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:#2b2d42;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px}
+.logo{font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--ink);text-decoration:none;margin-bottom:22px}.logo b{color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px 22px;width:100%;max-width:480px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+h1{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--ink)}
+.ref{color:var(--mut);font-size:.85rem;margin:4px 0 22px}.ref strong{color:var(--ink);letter-spacing:1px}
+.steps{list-style:none;position:relative;margin-bottom:22px}
+.steps li{display:flex;gap:14px;align-items:flex-start;padding-bottom:22px;position:relative;color:var(--mut);font-weight:600}
+.steps li:last-child{padding-bottom:0}
+.steps li:before{content:"";position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--line)}
+.steps li:last-child:before{display:none}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--line);color:#fff;display:grid;place-items:center;font-size:.8rem;flex-shrink:0;z-index:1}
+.steps li small{display:block;font-weight:400;font-size:.8rem}
+.steps li.done{color:var(--ink)}.steps li.done .dot{background:var(--ok)}.steps li.done:before{background:var(--ok)}
+.steps li.now .dot{background:var(--red);box-shadow:0 0 0 5px rgba(217,4,41,.15)}.steps li.now{color:var(--red)}
+.cancel{background:#fff1f2;color:var(--red);border-radius:12px;padding:14px;font-weight:600;margin-bottom:22px}
+.lines{list-style:none;border-top:1px solid var(--line);font-size:.9rem}
+.lines li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.total{display:flex;justify-content:space-between;font-weight:800;padding-top:12px}.total strong{color:var(--red)}
+.live{font-size:.75rem;color:var(--mut);text-align:center;margin-top:16px}
+.err{text-align:center;color:var(--mut)}
+a.back{margin-top:20px;color:var(--red);font-weight:600;text-decoration:none;font-size:.9rem}
+</style>
+</head>
+<body>
+<a class="logo" href="/">Justine <b>Food</b></a>
+<div class="card" id="card"><p class="err">Chargement…</p></div>
+<a class="back" href="/">← Retour au site</a>
+<script>
+const id = new URLSearchParams(location.search).get('id') || '';
+const STEPS = [['nouvelle','Commande reçue','Nous avons bien reçu votre commande'],
+  ['en_preparation','En préparation','Nos cuisiniers préparent vos plats'],
+  ['en_livraison','En livraison','Votre commande est en route'],
+  ['livree','Livrée','Bon appétit !']];
+const FCFA = n => Number(n).toLocaleString('fr-FR') + ' FCFA';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function load(){
+  const card = document.getElementById('card');
+  try {
+    const r = await fetch('/api/track/' + encodeURIComponent(id));
+    if (r.status === 404) { card.innerHTML = '<p class="err">Commande introuvable. Vérifiez votre lien de suivi.</p>'; return; }
+    const o = await r.json(), cur = STEPS.findIndex(s => s[0] === o.status);
+    const steps = o.status === 'annulee' ? '<div class="cancel">Cette commande a été annulée. Contactez-nous pour plus d\'informations.</div>'
+      : '<ul class="steps">' + STEPS.map((s, i) => `<li class="${i < cur || o.status === 'livree' ? 'done' : i === cur ? 'now' : ''}"><span class="dot">${i < cur || o.status === 'livree' ? '✓' : ''}</span><span>${s[1]}<small>${s[2]}</small></span></li>`).join('') + '</ul>';
+    card.innerHTML = `<h1>Suivi de votre commande</h1>
+      <p class="ref">N° <strong>${esc(o.id.toUpperCase())}</strong> · ${new Date(o.createdAt).toLocaleString('fr-FR', {dateStyle:'medium', timeStyle:'short'})}</p>
+      ${steps}
+      <ul class="lines">${o.items.map(i => `<li><span>${i.qty} × ${esc(i.name)}</span><span>${FCFA(i.qty * i.price)}</span></li>`).join('')}</ul>
+      <div class="total"><span>Total</span><strong>${FCFA(o.total)}</strong></div>
+      <p class="live">Mise à jour automatique</p>`;
+  } catch (e) { /* on garde l'affichage précédent */ }
+}
+load(); setInterval(load, 8000);
+</script>
+</body>
+</html>

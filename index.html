@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Justine Food – Administration</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#d6001c;--ink:#14171c;--mut:#6b7280;--bg:#f6f7f9;--card:#fff;--line:#e8eaee;--ok:#16a34a;--warn:#d97706}
+@media(prefers-color-scheme:dark){:root{--ink:#f1f2f4;--mut:#9aa1ad;--bg:#0f1115;--card:#181b21;--line:#2a2e36}}
+[hidden]{display:none!important}
+*{box-sizing:border-box}body{margin:0;font:15px 'Plus Jakarta Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+h1,h2,.logo{font-family:'Playfair Display',serif}
+.logo{font-size:24px}.logo b{color:var(--red)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 28px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.live{font-size:13px;color:var(--ok);font-weight:600}.live:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+.live.off{color:var(--warn)}.live.off:before{background:var(--warn)}
+main{max-width:1150px;margin:0 auto;padding:24px 20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.stat span{color:var(--mut);font-size:13px}.stat strong{display:block;font-size:26px;margin-top:4px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.tab,.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 18px;border-radius:99px;font-weight:600}
+.tab.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip{font-weight:500;padding:6px 14px;font-size:13px}.chip.on{border-color:var(--red);color:var(--red)}
+.sp{flex:1}
+.list{display:grid;gap:12px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:1.2fr 1.6fr auto;gap:18px;align-items:start}
+.item.fresh{border-color:var(--red);box-shadow:0 0 0 3px rgba(214,0,28,.12)}
+.item h3{margin:0 0 4px;font-size:16px}.mut{color:var(--mut);font-size:13px}
+.lines{margin:0;padding:0;list-style:none}.lines li{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.total{display:flex;justify-content:space-between;margin-top:8px;font-weight:700}.total em{color:var(--red);font-style:normal}
+.act{display:flex;flex-direction:column;gap:8px;min-width:150px}
+select{padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.btn{padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-align:center;text-decoration:none;font-size:13px;font-weight:600}
+.btn.wa{background:#25d366;border-color:#25d366;color:#fff}.btn.del{color:var(--red)}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;background:#fee2e2;color:var(--red)}
+.badge.en_preparation,.badge.en_attente,.badge.en_livraison{background:#fef3c7;color:var(--warn)}
+.badge.livree,.badge.confirmee{background:#dcfce7;color:var(--ok)}
+.badge.annulee{background:var(--line);color:var(--mut)}
+.empty{text-align:center;color:var(--mut);padding:50px 10px;background:var(--card);border:1px dashed var(--line);border-radius:14px}
+#login{min-height:100vh;display:grid;place-items:center}
+#login form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px;width:min(360px,92vw);display:grid;gap:14px}
+#login input{padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+#login button{padding:12px;border:0;border-radius:99px;background:var(--red);color:#fff;font-weight:700}
+#err{color:var(--red);font-size:13px;min-height:18px}
+@media(max-width:760px){.item{grid-template-columns:1fr}.act{flex-direction:row;flex-wrap:wrap}header{padding:14px 16px}}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form id="loginForm">
+    <div class="logo" style="text-align:center">Justine <b>Food</b></div>
+    <div class="mut" style="text-align:center">Espace d'administration</div>
+    <input id="pwd" type="password" placeholder="Mot de passe" required autofocus>
+    <div id="err"></div>
+    <button>Se connecter</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <div class="logo">Justine <b>Food</b> <span class="mut" style="font:13px 'Plus Jakarta Sans'">Administration</span></div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <span id="live" class="live off">Connexion…</span>
+      <button class="btn" id="logout">Déconnexion</button>
+    </div>
+  </header>
+  <main>
+    <div class="stats" id="stats"></div>
+    <div class="bar">
+      <button class="tab on" data-tab="orders">Commandes <span id="cO"></span></button>
+      <button class="tab" data-tab="reservations">Réservations <span id="cR"></span></button>
+      <span class="sp"></span>
+      <div id="filters" class="bar" style="margin:0"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </main>
+</div>
+
+<script>
+const API = location.origin;           // si le dashboard est hébergé ailleurs que le site, mettre l'URL du serveur
+const FCFA = n => Number(n).toLocaleString('fr-FR') + ' FCFA';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = d => new Date(d).toLocaleString('fr-FR', {dateStyle:'medium', timeStyle:'short'});
+const STATUS = {
+  orders:{nouvelle:'Nouvelle',en_preparation:'En préparation',en_livraison:'En livraison',livree:'Livrée',annulee:'Annulée'},
+  reservations:{en_attente:'En attente',confirmee:'Confirmée',annulee:'Annulée'}
+};
+let token = sessionStorage.getItem('jf_token'), data = {orders:[],reservations:[]}, tab = 'orders', filter = 'all', fresh = new Set();
+
+const api = (p, o = {}) => fetch(API + p, {...o, headers:{'Content-Type':'application/json', Authorization:'Bearer ' + token}})
+  .then(r => { if (r.status === 401) { logout(); throw 0; } return r; });
+
+function beep(){ try{ const c = new AudioContext(), o = c.createOscillator(), g = c.createGain();
+  o.connect(g); g.connect(c.destination); o.frequency.value = 880; g.gain.setValueAtTime(.2, c.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .6); o.start(); o.stop(c.currentTime + .6);}catch(e){} }
+
+document.getElementById('loginForm').onsubmit = async e => {
+  e.preventDefault();
+  const r = await fetch(API + '/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:pwd.value})});
+  if (!r.ok) return err.textContent = 'Mot de passe incorrect.';
+  token = (await r.json()).token; sessionStorage.setItem('jf_token', token); start();
+};
+function logout(){ sessionStorage.removeItem('jf_token'); location.reload(); }
+document.getElementById('logout').onclick = logout;
+
+async function start(){
+  login.hidden = true; app.hidden = false;
+  data = await (await api('/api/data')).json(); render();
+  const es = new EventSource(`${API}/api/stream?token=${token}`);
+  es.onopen = () => { live.className = 'live'; live.textContent = 'En direct'; };
+  es.onerror = () => { live.className = 'live off'; live.textContent = 'Reconnexion…'; };
+  es.addEventListener('order', e => { const o = JSON.parse(e.data); data.orders.unshift(o); fresh.add(o.id); beep(); render(); });
+  es.addEventListener('reservation', e => { const r = JSON.parse(e.data); data.reservations.unshift(r); fresh.add(r.id); beep(); render(); });
+  es.addEventListener('update', e => { const {kind, item} = JSON.parse(e.data); const i = data[kind].findIndex(x => x.id === item.id); if (i > -1) data[kind][i] = item; render(); });
+  es.addEventListener('refresh', async () => { data = await (await api('/api/data')).json(); render(); });
+}
+
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+  tab = b.dataset.tab; filter = 'all';
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b)); render();
+});
+
+async function setStatus(kind, id, status){ await api(`/api/${kind}/${id}`, {method:'PATCH', body:JSON.stringify({status})}); }
+async function remove(kind, id){ if (confirm('Supprimer définitivement cet élément ?')) await api(`/api/${kind}/${id}`, {method:'DELETE'}); }
+const PHONE_RESTO = '+229 01 66 86 35 53';
+function waNumber(p){ let n = String(p).replace(/\D/g, ''); if (n.startsWith('00')) n = n.slice(2); if (!n.startsWith('229')) n = '229' + n; return n; }
+function messageFor(kind, x){
+  const hi = `Bonjour ${x.name}, `, sign = '\n\nJustine Food 🍽️';
+  if (kind === 'orders') {
+    const ref = `n°${x.id.toUpperCase()}`;
+    const m = {
+      nouvelle: `votre commande ${ref} (${FCFA(x.total)}) a bien été reçue et est en cours de traitement.`,
+      en_preparation: `votre commande ${ref} est en cours de préparation.`,
+      en_livraison: `votre commande ${ref} est en route vers ${x.address}. Merci de rester joignable.`,
+      livree: `votre commande ${ref} a été livrée. Merci de votre confiance et bon appétit !`,
+      annulee: `nous sommes au regret de vous informer que votre commande ${ref} a dû être annulée. Contactez-nous au ${PHONE_RESTO}.`
+    };
+    return hi + (m[x.status] || m.nouvelle) + sign;
+  }
+  const when = fmt(x.datetime), who = x.guests ? ` pour ${x.guests}` : '';
+  const m = {
+    en_attente: `nous avons bien reçu votre demande de réservation du ${when}${who}. Nous vous confirmons très vite.`,
+    confirmee: `votre réservation du ${when}${who} est confirmée. Nous avons hâte de vous accueillir !`,
+    annulee: `nous sommes au regret de ne pouvoir honorer votre réservation du ${when}. Contactez-nous au ${PHONE_RESTO} pour trouver un autre créneau.`
+  };
+  return hi + (m[x.status] || m.en_attente) + sign;
+}
+function notify(kind, id){
+  const x = data[kind].find(i => i.id === id); if (!x) return;
+  window.open(`https://wa.me/${waNumber(x.phone)}?text=${encodeURIComponent(messageFor(kind, x))}`, '_blank', 'noopener');
+}
+
+function render(){
+  const today = new Date().toDateString();
+  const od = data.orders.filter(o => new Date(o.createdAt).toDateString() === today && o.status !== 'annulee');
+  const upcoming = data.reservations.filter(r => r.status !== 'annulee' && new Date(r.datetime) >= new Date()).length;
+  stats.innerHTML = [
+    ['Commandes du jour', od.length],
+    ['À traiter', data.orders.filter(o => o.status === 'nouvelle').length],
+    ["Chiffre d'affaires du jour", FCFA(od.reduce((s, o) => s + o.total, 0))],
+    ['Réservations à venir', upcoming]
+  ].map(([l, v]) => `<div class="stat"><span>${l}</span><strong>${v}</strong></div>`).join('');
+  cO.textContent = `(${data.orders.length})`; cR.textContent = `(${data.reservations.length})`;
+
+  filters.innerHTML = ['all', ...Object.keys(STATUS[tab])].map(s =>
+    `<button class="chip ${filter === s ? 'on' : ''}" onclick="filter='${s}';render()">${s === 'all' ? 'Tous' : STATUS[tab][s]}</button>`).join('');
+
+  const rows = data[tab].filter(x => filter === 'all' || x.status === filter);
+  list.innerHTML = rows.length ? rows.map(tab === 'orders' ? orderCard : resaCard).join('')
+    : `<div class="empty">${tab === 'orders' ? 'Aucune commande pour le moment. Elles apparaîtront ici dès qu\'un client commande.' : 'Aucune réservation pour le moment.'}</div>`;
+}
+
+const statusSel = (kind, x) => `<select aria-label="Statut" onchange="setStatus('${kind}','${x.id}',this.value)">
+  ${Object.entries(STATUS[kind]).map(([k, v]) => `<option value="${k}" ${x.status === k ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
+
+function orderCard(o){ return `<article class="item ${fresh.has(o.id) && o.status === 'nouvelle' ? 'fresh' : ''}">
+  <div><span class="badge ${o.status}">${STATUS.orders[o.status]}</span>
+    <h3>${esc(o.name)}</h3>${o.phone ? `<div class="mut">${esc(o.phone)}</div>` : ''}
+    ${o.address ? `<div class="mut">📍 ${esc(o.address)}</div>` : ''}
+    ${o.payment ? `<div class="mut">Paiement : ${esc(o.payment)}</div>` : ''}
+    <div class="mut">#${o.id} · ${fmt(o.createdAt)}</div></div>
+  <div><ul class="lines">${o.items.map(i => `<li><span>${i.qty} × ${esc(i.name)}</span><span>${FCFA(i.qty * i.price)}</span></li>`).join('')}</ul>
+    <div class="total"><span>Total</span><em>${FCFA(o.total)}</em></div>
+    ${o.note ? `<div class="mut" style="margin-top:8px">Note : ${esc(o.note)}</div>` : ''}</div>
+  <div class="act">${statusSel('orders', o)}
+    ${o.phone ? `<button class="btn wa" onclick="notify('orders','${o.id}')">Notifier le client</button>` : ''}
+    <button class="btn del" onclick="remove('orders','${o.id}')">Supprimer</button></div></article>`; }
+
+function resaCard(r){ return `<article class="item ${fresh.has(r.id) && r.status === 'en_attente' ? 'fresh' : ''}">
+  <div><span class="badge ${r.status}">${STATUS.reservations[r.status]}</span>
+    <h3>${esc(r.name)}</h3><div class="mut">${esc(r.phone)}</div>
+    <div class="mut">#${r.id} · reçue le ${fmt(r.createdAt)}</div></div>
+  <div><div><strong>${fmt(r.datetime)}</strong></div><div class="mut">${esc(r.guests)}</div>
+    ${r.note ? `<div class="mut" style="margin-top:8px">Demande : ${esc(r.note)}</div>` : ''}</div>
+  <div class="act">${statusSel('reservations', r)}
+    <button class="btn wa" onclick="notify('reservations','${r.id}')">Notifier le client</button>
+    <button class="btn del" onclick="remove('reservations','${r.id}')">Supprimer</button></div></article>`; }
+
+if (token) start().catch(() => {});
+</script>
+</body>
+</html>
